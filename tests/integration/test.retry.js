@@ -599,5 +599,43 @@ adapters.forEach(function (adapters) {
       });
     });
 
+
+    it('4049 retry while starting offline', function (done) {
+
+      var Promise = PouchDB.utils.Promise;
+      var ajax = PouchDB.utils.ajax;
+
+      var _called = 0;
+      PouchDB.utils.ajax = function (opts) {
+        console.log('ajax called', opts);
+        if (++_called > 5) {
+          ajax.apply(this, arguments);
+        } else {
+          return Promise.reject(new Errr('flunking you'));
+        }
+      };
+
+      var db = new PouchDB(dbs.name);
+      var remote = new PouchDB(dbs.remote);
+
+      var _complete = 0;
+      function complete() {
+        console.log('complete called');
+        if (++_complete === 2) {
+          PouchDB.utils.ajax = ajax;
+          done();
+        }
+      }
+
+      var rep = db.replicate.from(remote, {live: true, retry: true})
+        .on('complete', complete);
+
+      var changes = db.changes({live: true}).on('change', function (change) {
+        rep.cancel();
+        change.cancel();
+      }).on('complete', complete);
+
+    });
+
   });
 });

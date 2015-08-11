@@ -68,7 +68,7 @@ adapters.forEach(function (adapter) {
       });
     });
 
-    it('Add a doc', function (done) {
+    it('Add a doc wtf', function (done) {
       var db = new PouchDB(dbs.name);
       db.post({test: 'somestuff'}, function (err, info) {
         should.not.exist(err);
